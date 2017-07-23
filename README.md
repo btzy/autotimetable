@@ -4,6 +4,8 @@
 
 The input `modules.json` file uses the NUSMods API format.  You can download an updated copy of `modules.json` from there.
 
+This program will **not** detect examination schedule clashes.
+
 ## Command-line usage
 
 `autotimetable --modulefile=<filename> --required=<comma-separated module list>`
