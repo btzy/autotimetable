@@ -4,7 +4,7 @@
 
 The input `modules.json` file uses the NUSMods API format.  You can download an updated copy of `modules.json` from there.
 
-Autotimetable will **not** detect examination schedule clashes.
+Autotimetable will **not** detect examination schedule clashes.  Please check the examination schedule from somewhere else (e.g. NUSMods).
 
 ## Command-line usage
 
