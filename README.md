@@ -25,7 +25,7 @@ Do not put any spaces in the module list!
 * Prioritise modules when it is not possible to schedule all, or when the number of modules exceeds a user-defined maximum
 * Prefer some time slots more than others (e.g. no early morning lessons)
 * Schedule some time for meals
-* Attempt to minimise travelling distance
+* Attempt to minimise total travelling distance
 * Attempt to avoid back-to-back modules that are a long distance from each other
 * Interpret Saturday/Sunday lessons
 * Interpret lessons that are held on custom weeks (i.e. not every week, odd week, or even week)
