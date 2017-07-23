@@ -298,13 +298,13 @@ int main(int argc, char *argv[]) {
 	unsigned begin_index = std::accumulate(find_result.items.cbegin(), find_result.items.cend(), 24u, [](unsigned prev, const std::tuple<typename std::vector<autotimetable::mod>::const_iterator, typename std::vector<autotimetable::mod_item>::const_iterator, typename std::vector<autotimetable::mod_item_choice>::const_iterator>& curr) {
 		return std::min(prev, std::accumulate(std::get<2>(curr)->timeblock.days, std::get<2>(curr)->timeblock.days + autotimetable::TIMEBLOCK_DAY_COUNT, 24u, [](unsigned prev, const autotimetable::timeblock_day_t& curr) {
 			if (curr == 0)return prev;
-			return std::min(prev, intrinsics::find_last_set(curr));
+			return std::min(prev, intrinsics::find_smallest_set(curr));
 		}));
 	});
 	unsigned end_index = std::accumulate(find_result.items.cbegin(), find_result.items.cend(), 0u, [](unsigned prev, const std::tuple<typename std::vector<autotimetable::mod>::const_iterator, typename std::vector<autotimetable::mod_item>::const_iterator, typename std::vector<autotimetable::mod_item_choice>::const_iterator>& curr) {
 		return std::max(prev, std::accumulate(std::get<2>(curr)->timeblock.days, std::get<2>(curr)->timeblock.days + autotimetable::TIMEBLOCK_DAY_COUNT, 0u, [](unsigned prev, const autotimetable::timeblock_day_t& curr) {
 			if (curr == 0)return prev;
-			return std::max(prev, intrinsics::find_first_set(curr));
+			return std::max(prev, intrinsics::find_largest_set(curr));
 		}));
 	}) + 1;
 

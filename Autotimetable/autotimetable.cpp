@@ -18,7 +18,7 @@ namespace autotimetable {
 		std::for_each(timeblock.days, timeblock.days + TIMEBLOCK_DAY_COUNT, [&answer, &scorer](const timeblock_day_t& day) {
 			if (day != 0) {
 				answer += scorer.travel_penalty;
-				answer += (intrinsics::find_first_set(day) - intrinsics::find_last_set(day) + 1) * scorer.empty_slot_penalty;
+				answer += (intrinsics::find_largest_set(day) - intrinsics::find_smallest_set(day) + 1) * scorer.empty_slot_penalty;
 			}
 		});
 		return answer;
