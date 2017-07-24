@@ -58,7 +58,17 @@ inline bool read_required_param(int argc, char* argv[], const char* key, const c
 		std::cout << failtext << std::endl;
 		return false;
 	}
+}
 
+inline bool read_optional_param(int argc, char* argv[], const char* key, std::string& out) {
+	char* _tmp = nullptr;
+	if (find_arg(argc, argv, key, _tmp)) {
+		out = std::string(_tmp);
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 inline unsigned int parse_day(const std::string& daytext) {
@@ -128,11 +138,23 @@ inline void print_spacer(std::ostream& out, unsigned begin_index, unsigned end_i
 
 inline void print_modname(std::ostream& out, unsigned begin_index, unsigned end_index, unsigned width, const autotimetable::timetable& timetable, unsigned dayindex) {
 	out << std::setw(0) << '|';
-	for (unsigned i = begin_index; i < end_index; ++i) {
+	for (unsigned i = begin_index; i < end_index; ) {
 		auto it = std::find_if(timetable.items.cbegin(), timetable.items.cend(), [i, dayindex](const std::tuple<typename std::vector<autotimetable::mod>::const_iterator, typename std::vector<autotimetable::mod_item>::const_iterator, typename std::vector<autotimetable::mod_item_choice>::const_iterator>& choice) {
 			return (std::get<2>(choice)->timeblock.days[dayindex] & (1u << i));
 		});
-		if (it != timetable.items.cend() && (i == begin_index || !(std::get<2>(*it)->timeblock.days[dayindex] & (1u << (i - 1))))) {
+		if (it != timetable.items.cend()) {
+			unsigned modiend = i + 1;
+			while (modiend < end_index && std::get<2>(*it)->timeblock.days[dayindex] & (1u << modiend))++modiend;
+			unsigned eff_width = (width + 1) * (modiend - i) - 1;
+			out << std::left << std::setw(eff_width) << std::setfill(' ') << std::get<0>(*it)->code.substr(0, eff_width);
+			i = modiend;
+		}
+		else {
+			out << std::left << std::setw(width) << std::setfill(' ') << "";
+			++i;
+		}
+		out << std::setw(0) << '|';
+		/*if (it != timetable.items.cend() && (i == begin_index || !(std::get<2>(*it)->timeblock.days[dayindex] & (1u << (i - 1))))) {
 			out << std::left << std::setw(width) << std::setfill(' ') << std::get<0>(*it)->code.substr(0, width);
 		}
 		else {
@@ -143,51 +165,51 @@ inline void print_modname(std::ostream& out, unsigned begin_index, unsigned end_
 		}
 		else {
 			out << std::setw(0) << '|';
-		}
+		}*/
 	}
 	out << std::endl;
 }
 
 inline void print_modkind(std::ostream& out, unsigned begin_index, unsigned end_index, unsigned width, const autotimetable::timetable& timetable, unsigned dayindex) {
 	out << std::setw(0) << '|';
-	for (unsigned i = begin_index; i < end_index; ++i) {
+	for (unsigned i = begin_index; i < end_index; ) {
 		auto it = std::find_if(timetable.items.cbegin(), timetable.items.cend(), [i, dayindex](const std::tuple<typename std::vector<autotimetable::mod>::const_iterator, typename std::vector<autotimetable::mod_item>::const_iterator, typename std::vector<autotimetable::mod_item_choice>::const_iterator>& choice) {
 			return (std::get<2>(choice)->timeblock.days[dayindex] & (1u << i));
 		});
-		if (it != timetable.items.cend() && (i == begin_index || !(std::get<2>(*it)->timeblock.days[dayindex] & (1u << (i - 1))))) {
-			out << std::left << std::setw(width) << std::setfill(' ') << std::get<1>(*it)->kind.substr(0, width);
+		if (it != timetable.items.cend()) {
+			unsigned modiend = i + 1;
+			while (modiend < end_index && std::get<2>(*it)->timeblock.days[dayindex] & (1u << modiend))++modiend;
+			unsigned eff_width = (width + 1) * (modiend - i) - 1;
+			out << std::left << std::setw(eff_width) << std::setfill(' ') << std::get<1>(*it)->kind.substr(0, eff_width);
+			i = modiend;
 		}
 		else {
 			out << std::left << std::setw(width) << std::setfill(' ') << "";
+			++i;
 		}
-		if (it != timetable.items.cend() && i < end_index - 1 && (std::get<2>(*it)->timeblock.days[dayindex] & (1u << i)) && (std::get<2>(*it)->timeblock.days[dayindex] & (1u << (i + 1)))) {
-			out << std::setw(0) << ' ';
-		}
-		else {
-			out << std::setw(0) << '|';
-		}
+		out << std::setw(0) << '|';
 	}
 	out << std::endl;
 }
 
 inline void print_modchoice(std::ostream& out, unsigned begin_index, unsigned end_index, unsigned width, const autotimetable::timetable& timetable, unsigned dayindex) {
 	out << std::setw(0) << '|';
-	for (unsigned i = begin_index; i < end_index; ++i) {
+	for (unsigned i = begin_index; i < end_index; ) {
 		auto it = std::find_if(timetable.items.cbegin(), timetable.items.cend(), [i, dayindex](const std::tuple<typename std::vector<autotimetable::mod>::const_iterator, typename std::vector<autotimetable::mod_item>::const_iterator, typename std::vector<autotimetable::mod_item_choice>::const_iterator>& choice) {
 			return (std::get<2>(choice)->timeblock.days[dayindex] & (1u << i));
 		});
-		if (it != timetable.items.cend() && (i == begin_index || !(std::get<2>(*it)->timeblock.days[dayindex] & (1u << (i - 1))))) {
-			out << std::left << std::setw(width) << std::setfill(' ') << std::get<2>(*it)->name.substr(0, width);
+		if (it != timetable.items.cend()) {
+			unsigned modiend = i + 1;
+			while (modiend < end_index && std::get<2>(*it)->timeblock.days[dayindex] & (1u << modiend))++modiend;
+			unsigned eff_width = (width + 1) * (modiend - i) - 1;
+			out << std::left << std::setw(eff_width) << std::setfill(' ') << std::get<2>(*it)->name.substr(0, eff_width);
+			i = modiend;
 		}
 		else {
 			out << std::left << std::setw(width) << std::setfill(' ') << "";
+			++i;
 		}
-		if (it != timetable.items.cend() && i < end_index - 1 && (std::get<2>(*it)->timeblock.days[dayindex] & (1u << i)) && (std::get<2>(*it)->timeblock.days[dayindex] & (1u << (i + 1)))) {
-			out << std::setw(0) << ' ';
-		}
-		else {
-			out << std::setw(0) << '|';
-		}
+		out << std::setw(0) << '|';
 	}
 	out << std::endl;
 }
@@ -200,6 +222,23 @@ int main(int argc, char *argv[]) {
 
 	std::string required_mods_str;
 	if (!read_required_param(argc, argv, "--required", "Fatal error: required modules not specified.  Use \"--required=<module code 1>,<module code 2>,...\", e.g. \"--required=CS1010,MA1101R,CS1231,BN1101,GET1002\" (without spaces).", required_mods_str))return 0;
+
+	bool quiet = false;
+	{
+		std::string quiet_str;
+		if (read_optional_param(argc, argv, "--quiet", quiet_str)) {
+			if (quiet_str.empty() || quiet_str == "true" || quiet_str == "t" || quiet_str == "1") {
+				quiet = true;
+			}
+			else if (quiet_str == "false" || quiet_str == "f" || quiet_str == "0") {
+				// already default false
+			}
+			else {
+				std::cout << "Warning: Cannot interpret value for --quiet, ignoring it." << std::endl;
+			}
+		}
+	}
+
 
 
 	std::vector<std::string> required_mods;
@@ -231,7 +270,7 @@ int main(int argc, char *argv[]) {
 			std::ifstream in(modulefilepath);
 			in >> json_data;
 		}
-		std::for_each(std::make_move_iterator(json_data.begin()), std::make_move_iterator(json_data.end()), [&all_mods](nlohmann::json&& json_module) {
+		std::for_each(std::make_move_iterator(json_data.begin()), std::make_move_iterator(json_data.end()), [&all_mods, quiet](nlohmann::json&& json_module) {
 			autotimetable::mod mod;
 			try {
 				mod.code = json_module["ModuleCode"].get<std::string>();
@@ -255,7 +294,7 @@ int main(int argc, char *argv[]) {
 				});
 			}
 			catch (const std::invalid_argument& err) {
-				std::cout << "Skipping module " << mod.code << " as we cannot interpret it: " << err.what() << std::endl;
+				if (!quiet)std::cout << "Skipping module " << mod.code << " as we cannot interpret it: " << err.what() << std::endl;
 				return;
 			}
 			all_mods.emplace_back(std::move(mod));
