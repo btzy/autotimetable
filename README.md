@@ -16,6 +16,10 @@ Autotimetable will **not** detect examination schedule clashes.  Please check th
 
 Do not put any spaces in the module list!
 
+## Other options
+
+`--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.
+
 ## What it can do
 
 * Attempt to leave full days free where possible
