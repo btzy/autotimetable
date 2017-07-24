@@ -18,7 +18,7 @@ Do not put any spaces in the module list!
 
 ## Other options
 
-`--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.
+`--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.  Autotimetable will still emit a warning if a module specified by `--required` is missing (or has been ignored as it was uninterpretable).
 
 ## What it can do
 
