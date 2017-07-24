@@ -15,7 +15,7 @@ namespace autotimetable {
 
 	typedef std::uint32_t score_t;
 
-	constexpr const std::size_t TIMEBLOCK_DAY_COUNT = 10;
+	constexpr const std::size_t TIMEBLOCK_DAY_COUNT = 12;
 
 
 	struct timeblock {
@@ -27,21 +27,31 @@ namespace autotimetable {
 		timeblock(timeblock&&) = default;
 		timeblock& operator=(const timeblock&) = default;
 		timeblock& operator=(timeblock&&) = default;
-		void add(const timeblock& other) noexcept {
+		inline void add(const timeblock& other) noexcept {
 			for (std::size_t i = 0; i < TIMEBLOCK_DAY_COUNT; ++i) {
 				days[i] |= other.days[i];
 			}
 		}
-		void remove(const timeblock& other) noexcept {
+		inline void remove(const timeblock& other) noexcept {
 			for (std::size_t i = 0; i < TIMEBLOCK_DAY_COUNT; ++i) {
 				days[i] &= ~other.days[i];
 			}
 		}
-		bool clash(const timeblock& other) const noexcept {
+		inline bool clash(const timeblock& other) const noexcept {
 			for (std::size_t i = 0; i < TIMEBLOCK_DAY_COUNT; ++i) {
 				if ((days[i] & other.days[i]) != 0)return true;
 			}
 			return false;
+		}
+		inline bool operator==(const timeblock& other) const noexcept {
+			for (std::size_t i = 0; i < TIMEBLOCK_DAY_COUNT; ++i) {
+				if (days[i] != other.days[i])return false;
+			}
+			return true;
+		}
+
+		inline bool operator!=(const timeblock& other) const noexcept {
+			return !(*this == other);
 		}
 	};
 

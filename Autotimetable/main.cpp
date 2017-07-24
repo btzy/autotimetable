@@ -77,6 +77,7 @@ inline unsigned int parse_day(const std::string& daytext) {
 	if (daytext == "Wednesday")return 2;
 	if (daytext == "Thursday")return 3;
 	if (daytext == "Friday")return 4;
+	if (daytext == "Saturday")return 5;
 	throw std::invalid_argument("Argument \"" + daytext + "\" not interpretable as day of week.");
 }
 
@@ -88,10 +89,21 @@ inline unsigned int parse_weektype(const std::string& weektext) {
 	if (weektext == "Odd Week")return WEEK_ODD;
 	if (weektext == "Even Week")return WEEK_EVEN;
 	if (weektext == "Every Week")return WEEK_ODD | WEEK_EVEN;
+	if (weektext == "0,1,2,3,4,5,6,7,8,9,10,11,12,13")return WEEK_ODD | WEEK_EVEN;
 	throw std::invalid_argument("Argument \"" + weektext + "\" not interpretable as week type.");
 }
 
-inline autotimetable::timeblock get_timeblock_from_json_choice(const nlohmann::json& json_choice) {
+inline unsigned int parse_weektype_lenient(const std::string& weektext, std::string& error) noexcept {
+	if (weektext == "Odd Week")return WEEK_ODD;
+	if (weektext == "Even Week")return WEEK_EVEN;
+	if (weektext == "Every Week")return WEEK_ODD | WEEK_EVEN;
+	if (weektext == "0,1,2,3,4,5,6,7,8,9,10,11,12,13")return WEEK_ODD | WEEK_EVEN;
+	error = "Argument \"" + weektext + "\" not interpretable as week type, will be treated as a weekly lesson.";
+	return WEEK_ODD | WEEK_EVEN; // if we can't tell, just say its every week for good measure
+}
+
+template <typename Callback>
+inline autotimetable::timeblock get_timeblock_from_json_choice(const nlohmann::json& json_choice, Callback soft_error_callback) {
 	autotimetable::timeblock ret;
 
 	std::string weektext = json_choice["WeekText"].get<std::string>();
@@ -99,7 +111,9 @@ inline autotimetable::timeblock get_timeblock_from_json_choice(const nlohmann::j
 	std::string starttimetext = json_choice["StartTime"].get<std::string>();
 	std::string endtimetext = json_choice["EndTime"].get<std::string>();
 
-	unsigned int weekmask = parse_weektype(weektext);
+	std::string weekerr;
+	unsigned int weekmask = parse_weektype_lenient(weektext, weekerr);
+	if (!weekerr.empty())soft_error_callback(weekerr);
 	unsigned int daynum = parse_day(daytext);
 	unsigned int starttime = static_cast<unsigned int>(std::stoul(starttimetext)) / 100;
 	unsigned int endtime = (static_cast<unsigned int>(std::stoul(endtimetext)) + 99) / 100; // round times up to nearest hour
@@ -239,6 +253,31 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	autotimetable::score_config scorer = autotimetable::default_config();
+	{
+		std::string override_empty_slot_penalty;
+		if (read_optional_param(argc, argv, "--empty-slot", override_empty_slot_penalty)) {
+			try {
+				scorer.empty_slot_penalty = static_cast<autotimetable::score_t>(std::stoul(override_empty_slot_penalty));
+			}
+			catch (...) {
+				std::cout << "Warning: Cannot interpret value for --empty-slot, ignoring it." << std::endl;
+			}
+		}
+	}
+	{
+		std::string override_travel_penalty;
+		if (read_optional_param(argc, argv, "--travel", override_travel_penalty)) {
+			try {
+				scorer.travel_penalty = static_cast<autotimetable::score_t>(std::stoul(override_travel_penalty));
+			}
+			catch (...) {
+				std::cout << "Warning: Cannot interpret value for --travel, ignoring it." << std::endl;
+			}
+		}
+	}
+
+
 
 
 	std::vector<std::string> required_mods;
@@ -276,12 +315,14 @@ int main(int argc, char *argv[]) {
 				mod.code = json_module["ModuleCode"].get<std::string>();
 				std::map<std::string, std::map<std::string, autotimetable::mod_item_choice>> choices; // {kind, collection of {choicename, choice}}
 				nlohmann::json& json_timeoptions = json_module["Timetable"];
-				std::for_each(std::make_move_iterator(json_timeoptions.begin()), std::make_move_iterator(json_timeoptions.end()), [&choices](nlohmann::json&& json_choice) {
+				std::for_each(std::make_move_iterator(json_timeoptions.begin()), std::make_move_iterator(json_timeoptions.end()), [&choices, quiet, &mod_code = mod.code](nlohmann::json&& json_choice) {
 					std::string kind = json_choice["LessonType"].get<std::string>();
 					std::map<std::string, autotimetable::mod_item_choice>& mod_item_choices = choices.emplace(std::move(kind), std::map<std::string, autotimetable::mod_item_choice>{}).first->second;
 					std::string choice_name = json_choice["ClassNo"].get<std::string>();
 					autotimetable::mod_item_choice& choice = mod_item_choices.emplace(choice_name, autotimetable::mod_item_choice{ choice_name }).first->second;
-					choice.timeblock.add(get_timeblock_from_json_choice(json_choice));
+					choice.timeblock.add(get_timeblock_from_json_choice(json_choice, [quiet, &mod_code](const std::string& err) {
+						if (!quiet)std::cout << "Soft warning for module " << mod_code << ": " << err << std::endl;
+					}));
 				});
 				mod.items.reserve(choices.size());
 				std::transform(std::make_move_iterator(choices.begin()), std::make_move_iterator(choices.end()), std::back_inserter(mod.items), [](std::pair<std::string, std::map<std::string, autotimetable::mod_item_choice>>&& choice_kind) {
@@ -327,7 +368,7 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "Running autotimetable..." << std::endl;
 	std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-	autotimetable::timetable find_result = autotimetable::find_best(selected_mods);
+	autotimetable::timetable find_result = autotimetable::find_best(selected_mods, scorer);
 	auto milliseconds_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count();
 	std::cout << "Done running autotimetable..." << std::endl;
 
@@ -359,22 +400,26 @@ int main(int argc, char *argv[]) {
 		print_spacer(std::cout, begin_index, end_index, 8);
 		print_header(std::cout, begin_index, end_index, 8);
 		print_spacer(std::cout, begin_index, end_index, 8);
-		for (unsigned i = 0; i < 5; ++i) {
-			print_modname(std::cout, begin_index, end_index, 8, find_result, i);
-			print_modkind(std::cout, begin_index, end_index, 8, find_result, i);
-			print_modchoice(std::cout, begin_index, end_index, 8, find_result, i);
-			print_spacer(std::cout, begin_index, end_index, 8);
+		for (unsigned i = 0; i < 6; ++i) {
+			if (i % 6 != 5 || find_result.timeblock.days[i] != 0) {
+				print_modname(std::cout, begin_index, end_index, 8, find_result, i);
+				print_modkind(std::cout, begin_index, end_index, 8, find_result, i);
+				print_modchoice(std::cout, begin_index, end_index, 8, find_result, i);
+				print_spacer(std::cout, begin_index, end_index, 8);
+			}
 		}
 		std::cout << std::endl;
 		std::cout << "=== Even Week ===" << std::endl;
 		print_spacer(std::cout, begin_index, end_index, 8);
 		print_header(std::cout, begin_index, end_index, 8);
 		print_spacer(std::cout, begin_index, end_index, 8);
-		for (unsigned i = 5; i < 10; ++i) {
-			print_modname(std::cout, begin_index, end_index, 8, find_result, i);
-			print_modkind(std::cout, begin_index, end_index, 8, find_result, i);
-			print_modchoice(std::cout, begin_index, end_index, 8, find_result, i);
-			print_spacer(std::cout, begin_index, end_index, 8);
+		for (unsigned i = 6; i < 12; ++i) {
+			if (i % 6 != 5 || find_result.timeblock.days[i] != 0) {
+				print_modname(std::cout, begin_index, end_index, 8, find_result, i);
+				print_modkind(std::cout, begin_index, end_index, 8, find_result, i);
+				print_modchoice(std::cout, begin_index, end_index, 8, find_result, i);
+				print_spacer(std::cout, begin_index, end_index, 8);
+			}
 		}
 		
 	}
