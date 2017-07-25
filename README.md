@@ -24,6 +24,10 @@ Do not put any spaces in the module list!
 
 `--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.  Autotimetable will still emit a warning if a module specified by `--required` is missing (or has been ignored as it was uninterpretable).
 
+### Scoring system
+
+Each timetable is scored by a penalty system, and the best timetable is the one that has the lowest penalty of all valid timetables.
+
 `--empty-slot=<unsigned int>` - Set the penalty for every empty timetable slot that is in-between lesson slots (user needs to wait between lessons).  The default is `1`.
 
 `--travel=<unsigned int>` - Set the penalty for every day that has at least one lesson (user needs to travel to school).  The default is `10`.
@@ -48,6 +52,14 @@ Adjusting the relative values of the penalty settings allows Autotimetable to ge
 ## Compilation
 
 Autotimetable should compile in any C++14-compliant compiler.  Autotimetable has been tested to work with MSVC and GCC under Windows, but should work with Linux and Clang too.
+
+For compilation as a command-line program with the included `main.cpp`, several files are included for convenience:
+
+ * Visual Studio 2017 solution and project files (for MSVC/Windows)
+ * `compile-gcc.sh` (for GCC/Linux)
+ * `compile-gcc.bat` (for GCC/Windows)
+
+Running the GCC compile script for your platform without any modifications should correctly compile the command-line version of Autotimetable.  Of course, your machine needs to have a recent version of GCC that is invokable from the command-line (i.e. added to your PATH).
 
 ## Notes
 
