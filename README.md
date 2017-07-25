@@ -43,7 +43,7 @@ Adjusting the relative values of the penalty settings allows Autotimetable to ge
 * Schedule some time for meals
 * Attempt to minimise total travelling distance
 * Attempt to avoid back-to-back modules that are a long distance from each other
-* Interpret lessons that are held on custom weeks (i.e. not every week, odd week, or even week) (this will be treated as a weekly lesson)
+* Interpret lessons that are held on custom weeks (i.e. not every week, odd week, or even week) (this is currently treated as a weekly lesson)
 
 ## Compilation
 
