@@ -24,9 +24,9 @@ Do not put any spaces in the module list!
 
 `--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.  Autotimetable will still emit a warning if a module specified by `--required` is missing (or has been ignored as it was uninterpretable).
 
-`--empty-slot=<unsigned int>` - Set the penalty for every empty timetable slot that is in-between lesson slots (user needs to wait between lessons).
+`--empty-slot=<unsigned int>` - Set the penalty for every empty timetable slot that is in-between lesson slots (user needs to wait between lessons).  The default is `1`.
 
-`--travel=<unsigned int>` - Set the penalty for every day that has at least one lesson (user needs to travel to school).
+`--travel=<unsigned int>` - Set the penalty for every day that has at least one lesson (user needs to travel to school).  The default is `10`.
 
 Adjusting the relative values of the penalty settings allows Autotimetable to generate the ideal timetable for you :)
 
@@ -47,7 +47,7 @@ Adjusting the relative values of the penalty settings allows Autotimetable to ge
 
 ## Compilation
 
-Autotimetable should compile in any C++!4-compliant compiler.  MSVC and GCC have been tested to work.
+Autotimetable should compile in any C++14-compliant compiler.  Autotimetable has been tested to work with MSVC and GCC under Windows, but should work with Linux and Clang too.
 
 ## Notes
 
