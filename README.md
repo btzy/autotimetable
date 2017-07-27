@@ -28,9 +28,13 @@ Do not put any spaces in the module list!
 
 Each timetable is scored by a penalty system, and the best timetable is the one that has the lowest penalty of all valid timetables.
 
-`--empty-slot=<unsigned int>` - Set the penalty for every empty timetable slot that is in-between lesson slots (user needs to wait between lessons).  The default is `1`.
+`--empty-slot=<unsigned int>` - Sets the penalty for every empty timetable slot that is in-between lesson slots (user needs to wait between lessons).  The default is `1`.
 
-`--travel=<unsigned int>` - Set the penalty for every day that has at least one lesson (user needs to travel to school).  The default is `10`.
+`--travel=<unsigned int>` - Sets the penalty for every day that has at least one lesson (user needs to travel to school).  The default is `8`.
+
+`--no-lunch=<unsigned int>` - Sets the penalty for every day with no empty lunch-time slots (user cannot eat lunch).  The default is `6`.  If `<unsigned int>` is left empty, the penalty is set to `0`.
+
+`--lunch-start=<time>`, `--lunch-end=<time>` - Sets the start and end times for lunch.  `<time>` must be a whole number of hours using the 24-hour clock, e.g. `1200` (12 noon) or `1500` (3 pm).  Non-zero minutes (e.g. `1430`) are not allowed.  The default `--lunch-start` is `1100` and the default `--lunch-end` is `1500`.
 
 Adjusting the relative values of the penalty settings allows Autotimetable to generate the ideal timetable for you :)
 
@@ -39,12 +43,12 @@ Adjusting the relative values of the penalty settings allows Autotimetable to ge
 * Attempt to minimise time spent in school
 * Attempt to leave full days free where possible
 * Interpret lessons that are held on odd/even weeks only
+* Schedule some time for lunch
 
 ## What it cannot do (yet)
 
 * Prioritise modules when it is not possible to schedule all, or when the number of modules exceeds a user-defined maximum
 * Prefer some time slots more than others (e.g. no early morning lessons)
-* Schedule some time for meals
 * Attempt to minimise total travelling distance
 * Attempt to avoid back-to-back modules that are a long distance from each other
 * Interpret lessons that are held on custom weeks (i.e. not every week, odd week, or even week) (this is currently treated as a weekly lesson)

@@ -276,6 +276,53 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+	{
+		std::string override_no_lunch_penalty;
+		if (read_optional_param(argc, argv, "--no-lunch", override_no_lunch_penalty)) {
+			if (override_no_lunch_penalty.empty()) {
+				scorer.no_lunch_penalty = 0;
+			}
+			else {
+				try {
+					scorer.no_lunch_penalty = static_cast<autotimetable::score_t>(std::stoul(override_no_lunch_penalty));
+				}
+				catch (...) {
+					std::cout << "Warning: Cannot interpret value for --no-lunch, ignoring it." << std::endl;
+				}
+			}
+		}
+	}
+	{
+		std::string override_lunch_start, override_lunch_end;
+		bool has_lunch_start = read_optional_param(argc, argv, "--lunch-start", override_lunch_start);
+		bool has_lunch_end = read_optional_param(argc, argv, "--lunch-end", override_lunch_end);
+		if (has_lunch_start && !has_lunch_end) {
+			std::cout << "Warning: --lunch-start specified without --lunch-end, ignoring it." << std::endl;
+		}
+		else if (!has_lunch_start && has_lunch_end) {
+			std::cout << "Warning: --lunch-end specified without --lunch-start, ignoring it." << std::endl;
+		}
+		else if (has_lunch_start && has_lunch_end) {
+			try {
+				autotimetable::score_t tmp_lunch_start = static_cast<autotimetable::score_t>(std::stoul(override_lunch_start));
+				autotimetable::score_t tmp_lunch_end = static_cast<autotimetable::score_t>(std::stoul(override_lunch_end));
+				if (tmp_lunch_start % 100 || tmp_lunch_end % 100) {
+					std::cout << "Warning: --lunch-start and --lunch-end must end with '00', ignoring them." << std::endl;
+				}
+				else if (tmp_lunch_start > 2300)std::cout << "Warning: --lunch-start larger than 2300, ignoring it." << std::endl;
+				else if (tmp_lunch_end > 2400)std::cout << "Warning: --lunch-end larger than 2400, ignoring it." << std::endl;
+				else if (tmp_lunch_start >= tmp_lunch_end)std::cout << "Warning: --lunch-end must be later than --lunch-start, ignoring it." << std::endl;
+				else {
+					tmp_lunch_start /= 100;
+					tmp_lunch_end /= 100;
+					scorer.lunch_time = (1u << tmp_lunch_end) - (1u << tmp_lunch_start);
+				}
+			}
+			catch (...) {
+				std::cout << "Warning: Cannot interpret value for --lunch-start or --lunch-end, ignoring them." << std::endl;
+			}
+		}
+	}
 
 
 

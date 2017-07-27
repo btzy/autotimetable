@@ -43,6 +43,9 @@ namespace autotimetable {
 			if (day != 0) {
 				answer += scorer.travel_penalty;
 				answer += (intrinsics::find_largest_set(day) - intrinsics::find_smallest_set(day) + 1) * scorer.empty_slot_penalty;
+				if (((~day) & scorer.lunch_time) == 0) {
+					answer += scorer.no_lunch_penalty;
+				}
 			}
 		});
 		return answer;
