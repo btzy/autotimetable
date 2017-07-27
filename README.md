@@ -34,7 +34,7 @@ Each timetable is scored by a penalty system, and the best timetable is the one 
 
 `--no-lunch=<unsigned int>` - Sets the penalty for every day with no empty lunch-time slots (user cannot eat lunch).  The default is `6`.  If `<unsigned int>` is left empty, the penalty is set to `0`.
 
-`--lunch-start=<time>`, `--lunch-end=<time>` - Sets the start and end times for lunch.  `<time>` must be a whole number of hours using the 24-hour clock, e.g. `1200` (12 noon) or `1500` (3 pm).  Non-zero minutes (e.g. `1430`) are not allowed.  The default `--lunch-start` is `1100` and the default `--lunch-end` is `1500`.
+`--lunch-start=<time>`, `--lunch-end=<time>` - Sets the start and end times for lunch.  `<time>` must be a whole number of hours using the 24-hour clock, e.g. `1200` (12 noon) or `1500` (3 pm).  Non-zero minutes (e.g. `1430`) are not allowed.  The default `--lunch-start` is `1100` and the default `--lunch-end` is `1500`.  Both `--lunch-start` and `--lunch-end` must be specified to change the time period from the default.
 
 Adjusting the relative values of the penalty settings allows Autotimetable to generate the ideal timetable for you :)
 
