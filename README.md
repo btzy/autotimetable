@@ -1,12 +1,14 @@
 # Autotimetable
 
-Autotimetable is an automatic timetable generator library written in C++ for National University of Singapore (NUS) modules.  It uses a non-probabilistic recursive backtracking algorithm to find the best timetable amongst all possible combinations, hence, it will always generate the *best* timetable possible (of course, this is limited to the evaluation criteria available to Autotimetable (see what it can do below)).
+Autotimetable is an automatic timetable generator library written in C++ for National University of Singapore (NUS) modules.  It uses an optimized non-probabilistic recursive backtracking algorithm to find the best timetable amongst all possible combinations, hence, it will always generate the *best* timetable possible (of course, this is limited to the evaluation criteria available to Autotimetable (see what it can do below)).
 
 The library is in `autotimetable.cpp` (and the accompanying header file, `autotimetable.hpp`).
 
-Under normal use, speed of the generation engine is usually less than 50 ms and very likely less than 500 ms (counting the time in the Autotimetable algorithm only, not the loading of modules from file).
+Under normal use, the speed of the generation engine is usually less than 5 ms, and extremely likely to be less than 50 ms (counting the time in the Autotimetable engine only, not the loading of modules from file).
 
 To make usage more convenient, a `main.cpp` file is provided to allow the library to be compiled as a command-line program, and read module data in NUSMods format.
+
+For now, the command-line interface is the only way to use this library, but I envision compiling the engine to a WebAssembly to be used with a web-based UI in the future.
 
 Note: Autotimetable will **not** detect examination schedule clashes.  Please check the examination schedule from somewhere else (e.g. NUSMods).
 
@@ -20,11 +22,19 @@ Note: Autotimetable will **not** detect examination schedule clashes.  Please ch
 
 Do not put any spaces in the module list!
 
-## Other options
+### Required options
 
-`--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.  Autotimetable will still emit a warning if a module specified by `--required` is missing (or has been ignored as it was uninterpretable).
+`--modulefile=<filename>` - Sets the JSON file to use to obtain the module data.  This file should follow the NUSMods API format.  This option is processed by `main.cpp` before invoking the Autotimetable engine.
 
-### Scoring system
+`--required=<comma-separated module list>` - Selects the modules to pass to the Autotimetable engine, e.g. `CS1010,MA1101R,CS1231,BN1101,GET1002`.  There should be no spaces in the comma-separated module list.
+
+### Other options
+
+`--fixed=<comma-separated selection list>` - Selects the lessons to fix.  This option may be useful when certain modules are pre-allocated or you want a certain lesson at a fixed timeslot.  Each selection should be in the form `<module code>:<item kind>:<lesson number>`, e.g. `CS1010:Sectional_Teaching:2`.  If there are multiple selections, separate them with a single comma.  There should be no spaces in the comma-separated selection list; if the item kind contains spaces, they should be replaced by underscores or hyphens as in the example in this paragraph.  This option is processed by `main.cpp` before invoking the Autotimetable engine.
+
+`--quiet` - Don't grumble about modules with lessons that cannot be interpreted (see below for what this means).  These modules will be ignored regardless of the presence of this option.  Autotimetable will still emit a warning if a module specified by `--required` is missing (or has been ignored as it was uninterpretable).  This option is processed by `main.cpp` before invoking the Autotimetable engine.
+
+#### Scoring system
 
 Each timetable is scored by a penalty system, and the best timetable is the one that has the lowest penalty of all valid timetables.
 
