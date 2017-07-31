@@ -125,6 +125,10 @@ namespace autotimetable {
 			}
 			return best_score;
 		}
+		// note: this optimization can be done because if timetable A is a subset of timetable B, then the penalty for B must be at least equal to the penalty for A
+		if (current_score >= best_score) {
+			return best_score;
+		}
 
 		// if we reach here, it means next < end, i.e. we have some more mod_items to place on the timetable
 		// we will then place the next item on the timetable and recursively call this function again
@@ -142,9 +146,9 @@ namespace autotimetable {
 				return !current_timetable.timeblock.clash(choice.first);
 			});
 
-			search_iterator_t next_new = next;
-			++next_new;
-			search_iterator_t new_filter_it = sort_single_element_towards_front(next_new, filter_it, [](const search_item& a, const search_item& b) {
+			//search_iterator_t next_new = next;
+			//++next_new;
+			search_iterator_t new_filter_it = sort_single_element_towards_front(next, filter_it, [](const search_item& a, const search_item& b) {
 				return a.choices.size() < b.choices.size();
 			});
 

@@ -229,6 +229,23 @@ inline void print_modchoice(std::ostream& out, unsigned begin_index, unsigned en
 }
 
 
+inline std::tuple<std::string, std::string, std::string> parse_fixed_mod(const std::string& fixed_mods_str, std::size_t begin, std::size_t end) {
+	std::size_t c1 = fixed_mods_str.find(':', begin);
+	if (c1 == std::string::npos) {
+		throw std::invalid_argument("Cannot parse fixed mod selection: \"" + fixed_mods_str.substr(begin, end - begin) + "\".");
+	}
+	std::size_t c2 = fixed_mods_str.find(':', c1 + 1);
+	if (c2 == std::string::npos) {
+		throw std::invalid_argument("Cannot parse fixed mod selection: \"" + fixed_mods_str.substr(begin, end - begin) + "\".");
+	}
+	std::size_t c3 = fixed_mods_str.find(':', c2 + 1);
+	if (c3 != std::string::npos) {
+		throw std::invalid_argument("Cannot parse fixed mod selection: \"" + fixed_mods_str.substr(begin, end - begin) + "\".");
+	}
+	return std::tuple<std::string, std::string, std::string>(fixed_mods_str.substr(begin, c1 - begin), fixed_mods_str.substr(c1 + 1, c2 - (c1 + 1)), fixed_mods_str.substr(c2 + 1, end - (c2 + 1)));
+}
+
+
 int main(int argc, char *argv[]) {
 	std::string modulefilepath;
 	if (!read_required_param(argc, argv, "--modulefile", "Fatal error: module file not specified.  Use \"--modulefile=<filename>\".", modulefilepath))return 0;
@@ -236,6 +253,13 @@ int main(int argc, char *argv[]) {
 
 	std::string required_mods_str;
 	if (!read_required_param(argc, argv, "--required", "Fatal error: required modules not specified.  Use \"--required=<module code 1>,<module code 2>,...\", e.g. \"--required=CS1010,MA1101R,CS1231,BN1101,GET1002\" (without spaces).", required_mods_str))return 0;
+
+	std::string fixed_mods_str;
+	read_optional_param(argc, argv, "--fixed", fixed_mods_str);
+	for (char& ch : fixed_mods_str) {
+		if (ch == '-' || ch == '_')ch = ' ';
+	}
+
 
 	bool quiet = false;
 	{
@@ -328,15 +352,42 @@ int main(int argc, char *argv[]) {
 
 
 	std::vector<std::string> required_mods;
-	std::size_t curr = 0;
-	while (true) {
-		std::size_t next = required_mods_str.find(',', curr);
-		if (next == std::string::npos) {
-			required_mods.emplace_back(required_mods_str.substr(curr));
-			break;
+	if (!required_mods_str.empty()) {
+		std::size_t curr = 0;
+		while (true) {
+			std::size_t next = required_mods_str.find(',', curr);
+			if (next == std::string::npos) {
+				required_mods.emplace_back(required_mods_str.substr(curr));
+				break;
+			}
+			else {
+				required_mods.emplace_back(required_mods_str.substr(curr, next - curr));
+			}
+			curr = next + 1;
 		}
-		else {
-			required_mods.emplace_back(required_mods_str.substr(curr, next - curr));
+	}
+
+
+	std::vector<std::tuple<std::string, std::string, std::string>> fixed_mods;
+	if (!fixed_mods_str.empty()) {
+		std::size_t curr = 0;
+		while (true) {
+			std::size_t next = fixed_mods_str.find(',', curr);
+			try {
+				if (next == std::string::npos) {
+					fixed_mods.emplace_back(parse_fixed_mod(fixed_mods_str, curr, fixed_mods_str.size()));
+					break;
+				}
+				else {
+					fixed_mods.emplace_back(parse_fixed_mod(fixed_mods_str, curr, next));
+				}
+			}
+			catch (std::invalid_argument& e) {
+				std::cout << e.what() << "  Selection will be ignored.  Use \"--fixed=<selection 1>,<selection 2>,...\", where <selection #> = \"<module code>:<lesson kind>:<selection name>\", e.g. \"CS1010:Tutorial:T01\"." << std::endl;
+				if (next == std::string::npos) {
+					break;
+				}
+			}
 			curr = next + 1;
 		}
 	}
@@ -352,9 +403,13 @@ int main(int argc, char *argv[]) {
 	std::cout << "Loading modules..." << std::endl;
 	{
 		nlohmann::json json_data;
-		{
+		try{
 			std::ifstream in(modulefilepath);
 			in >> json_data;
+		}
+		catch (std::ios_base::failure& e) {
+			std::cout << "Fatal error: " << e.what() << std::endl;
+			return 0;
 		}
 		std::for_each(std::make_move_iterator(json_data.begin()), std::make_move_iterator(json_data.end()), [&all_mods, quiet](nlohmann::json&& json_module) {
 			autotimetable::mod mod;
@@ -409,6 +464,41 @@ int main(int argc, char *argv[]) {
 		}
 		else {
 			selected_mods.emplace_back(*(it->second)); // *copies* the autotimetable::mod
+		}
+	}
+	for (const std::tuple<std::string, std::string, std::string>& fix : fixed_mods) {
+		const std::string& mod_code = std::get<0>(fix);
+		auto it1 = std::find_if(selected_mods.begin(), selected_mods.end(), [&mod_code](const autotimetable::mod& mod){
+			return mod.code == mod_code;
+		});
+		if (it1 == selected_mods.end()) {
+			std::cout << "Cannot find module code \"" << mod_code << "\", fixed module constraint will be ignored" << std::endl;
+		}
+		else {
+			auto& items = it1->items;
+			const std::string& mod_kind = std::get<1>(fix);
+			auto it2 = std::find_if(items.begin(), items.end(), [&mod_kind](const autotimetable::mod_item& item) {
+				return item.kind == mod_kind;
+			});
+			if (it2 == items.end()) {
+				std::cout << "Cannot find module kind \"" << mod_kind << "\", fixed module constraint will be ignored" << std::endl;
+			}
+			else {
+				auto& choices = it2->choices;
+				const std::string& mod_choice = std::get<2>(fix);
+				auto it3 = std::find_if(choices.begin(), choices.end(), [&mod_choice](const autotimetable::mod_item_choice& choice) {
+					return choice.name == mod_choice;
+				});
+				if (it3 == choices.end()) {
+					std::cout << "Cannot find module choice \"" << mod_choice << "\", fixed module constraint will be ignored" << std::endl;
+				}
+				else {
+					// delete all the choices except this one:
+					autotimetable::mod_item_choice choice = std::move(*it3);
+					choices.clear();
+					choices.emplace_back(std::move(choice));
+				}
+			}
 		}
 	}
 	std::cout << "Done preparing." << std::endl;
