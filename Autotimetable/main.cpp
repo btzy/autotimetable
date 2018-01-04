@@ -239,7 +239,7 @@ inline std::tuple<std::string, std::string, std::string> parse_fixed_mod(const s
 		throw std::invalid_argument("Cannot parse fixed mod selection: \"" + fixed_mods_str.substr(begin, end - begin) + "\".");
 	}
 	std::size_t c3 = fixed_mods_str.find(':', c2 + 1);
-	if (c3 != std::string::npos) {
+	if (c3 < end) {
 		throw std::invalid_argument("Cannot parse fixed mod selection: \"" + fixed_mods_str.substr(begin, end - begin) + "\".");
 	}
 	return std::tuple<std::string, std::string, std::string>(fixed_mods_str.substr(begin, c1 - begin), fixed_mods_str.substr(c1 + 1, c2 - (c1 + 1)), fixed_mods_str.substr(c2 + 1, end - (c2 + 1)));
